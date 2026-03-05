@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
-from utils import prepare_dataset
+from utils.utils import prepare_dataset
 from model.transformer import Transformer
 from datasets import load_dataset
 import os

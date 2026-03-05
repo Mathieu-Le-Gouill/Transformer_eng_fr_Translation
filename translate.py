@@ -1,22 +1,28 @@
 import torch
-from utils import translate_sentences
+from utils.utils import translate_sentences
 from transformers import AutoTokenizer
 import os
+import sys
+
 
 if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Load tokenizer
     eng_tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
     fr_tokenizer = AutoTokenizer.from_pretrained("camembert-base")
 
     # Model saving path
-    checkpoint_dir = "./checkpoints"
-    os.makedirs(checkpoint_dir, exist_ok=True)
+    checkpoint_dir = "checkpoints"
+    model_path = os.path.join(checkpoint_dir, "transformer.pt")
+
+    # Check if model exists
+    if not os.path.isfile(model_path):
+        sys.exit(f"\nError: Transformer model not found at '{model_path}'.\n"
+                "Please make sure you have trained the model or placed the checkpoint in the correct directory.\n")
 
     # Load model
-    model = torch.load(os.path.join(checkpoint_dir, "transformer.pt"), map_location=device)
+    model = torch.load(model_path, map_location=device)
     model.eval()
 
     # Test sentences

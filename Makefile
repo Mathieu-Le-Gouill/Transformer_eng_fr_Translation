@@ -32,6 +32,5 @@ help:
 	@echo "Makefile commands:"
 	@echo "  make train      # run training"
 	@echo "  make translate  # run translation/inference"
-	@echo "  make test       # run tests"
-	@echo "  make clean      # remove temp files and virtual environment"
+	@echo "  make clean      # remove temp files and virtual environment including model checkpoints"
 	@echo "  make all        # show this help"

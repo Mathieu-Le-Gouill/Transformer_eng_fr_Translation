@@ -14,7 +14,9 @@ The project supports **training**, **translation/inference**, and **testing** th
 
 ### Training Results
 
-The model was trained for up to 15 epochs. Below is a summary of the **training and test losses** for each epoch:
+The model was trained for up to 15 epochs.
+
+Below is a summary of the **training and test losses** for each epoch:
 
 | Epoch | Train Loss | Test Loss |
 |-------|------------|-----------|
@@ -33,9 +35,6 @@ The model was trained for up to 15 epochs. Below is a summary of the **training 
 | 13    | 1.5891     | 1.7889    |
 | 14    | 1.5576     | 1.7753    |
 | 15    | 1.5316     | 1.7635    |
-
-
-Early stopping was triggered at epoch 15 to prevent overfitting.  
 
 ---
 

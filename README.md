@@ -14,31 +14,6 @@ The project supports **training**, **translation/inference**, and **testing** th
 
 ### Training Results
 
-EN: It is often said that the early bird catches the worm, but sometimes patience is more valuable.
-FR: Il est souvent dit que l’oiseau de bonne humeur, mais la patience est plus précieuse.
-
-EN: Had they followed the instructions carefully, they might have avoided the costly mistake.
-FR: Ils avaient suivis les instructions, ils auraient évité la tromper.
-
-EN: The book, which was written in the 19th century, still resonates with readers today.
-FR: Le registre, qui était écrit au 19, toujours des lecteurs avec des lecteurs.
-
-EN: The scientist, who had spent years studying climate change, finally published her groundbreaking research.
-FR: Le aïeur, qui avait passé des années de travail, finit par accepter ses études.
-
-EN: Although it was raining heavily, she decided to go for a long walk in the park.
-FR: Bien qu’il pleuvait lourdement, elle se décidait pour aller une longue promenade dans le parc.
-
-EN: She wondered whether she would ever have the courage to confront her fears.
-FR: Elle s’interrogea si jamais elle eût eu le courage de se nourrir de ses craintes.
-
-EN: While waiting for the train, I noticed a group of children playing happily near the station.
-FR: Pendant qu'on attendit le train, je remarquai un groupe de enfants qui jouissait heureusement près de la gare.
-
-EN: If I had known about the meeting earlier, I would have prepared a detailed presentation.
-FR: Si je savais bien quelle était la rencontre, je serais employée à un cadeau.
-
-
 The model was trained for up to 15 epochs. Below is a summary of the **training and test losses** for each epoch:
 
 | Epoch | Train Loss | Test Loss |
@@ -61,6 +36,21 @@ The model was trained for up to 15 epochs. Below is a summary of the **training 
 
 
 Early stopping was triggered at epoch 15 to prevent overfitting.  
+
+---
+
+### Translation for custom sequences
+
+| English (EN) | French (FR) |
+|--------------|-------------|
+| It is often said that the early bird catches the worm, but sometimes patience is more valuable. | Il est souvent dit que l’oiseau de bonne humeur, mais la patience est plus précieuse. |
+| Had they followed the instructions carefully, they might have avoided the costly mistake. | Ils avaient suivis les instructions, ils auraient évité la tromper. |
+| The book, which was written in the 19th century, still resonates with readers today. | Le registre, qui était écrit au 19, toujours des lecteurs avec des lecteurs. |
+| The scientist, who had spent years studying climate change, finally published her groundbreaking research. | Le aïeur, qui avait passé des années de travail, finit par accepter ses études. |
+| Although it was raining heavily, she decided to go for a long walk in the park. | Bien qu’il pleuvait lourdement, elle se décidait pour aller une longue promenade dans le parc. |
+| She wondered whether she would ever have the courage to confront her fears. | Elle s’interrogea si jamais elle eût eu le courage de se nourrir de ses craintes. |
+| While waiting for the train, I noticed a group of children playing happily near the station. | Pendant qu'on attendit le train, je remarquai un groupe de enfants qui jouissait heureusement près de la gare. |
+| If I had known about the meeting earlier, I would have prepared a detailed presentation. | Si je savais bien quelle était la rencontre, je serais employée à un cadeau. |
 
 ---
 

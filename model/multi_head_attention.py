@@ -1,10 +1,18 @@
 import torch
-from torch import nn
+from torch import nn, Tensor
 import math
 import torch.nn.functional as F
 
 class MultiHeadAttention(nn.Module):
-    def __init__(self, d_model=768, num_heads=3, dropout=0.1):
+    def __init__(self, d_model: int=768, num_heads: int=3, dropout: float=0.1):
+        """
+        Multi-Head Attention Module.
+
+        Args:
+            d_model: dimensionality of the input embeddings.
+            num_heads: number of attention heads.
+            dropout: dropout probability applied to attention weights.
+        """
         super().__init__()
 
         assert d_model % num_heads == 0, "d_model must be divisible by num_heads"
@@ -21,49 +29,78 @@ class MultiHeadAttention(nn.Module):
         self.dropout = dropout   
         self.attn_dropout = nn.Dropout(dropout) 
 
-    # query: [batch_size, seq_len, d_model]
-    # key:   [batch_size, key_len, d_model]
-    # value: [batch_size, key_len, d_model]
-    def forward(self, query, key, value, mask=None):
+
+    def forward(self, query: Tensor, key: Tensor, value: Tensor, mask=None):
+        """
+        Compute the multi-head attention forward pass.
+
+        Args:
+            query: query tensor of shape (B, seq_len, d_model).
+            key: key tensor of shape (B, key_len, d_model).
+            value: value tensor of shape (B, key_len, d_model).
+            mask: optional attention mask applied to attention scores.
+
+        Returns:
+            output tensor of shape (B, seq_len, d_model).
+        """
 
         batch_size, seq_len, d_model = query.size()
         key_len = key.size(1)
 
-        Q = self.w_query(query) # [batch_size, seq_len, d_model]
-        K = self.w_key(key) # [batch_size, key_size, d_model]
-        V = self.w_value(value) # [batch_size, key_size, d_model]
+        Q = self.w_query(query) # (B, seq_len, d_model)
+        K = self.w_key(key) # (B, key_size, d_model)
+        V = self.w_value(value) # (B, key_size, d_model)
 
-        Q = Q.view(batch_size, seq_len, self.num_heads, self.d_head).transpose(1, 2) # [batch_size, num_heads, seq_len, d_head]
-        K_T = K.view(batch_size, key_len, self.num_heads, self.d_head).permute(0, 2, 3, 1) # [batch_size, num_heads, d_head, key_len]
-        V = V.view(batch_size, key_len, self.num_heads, self.d_head).transpose(1, 2) # [batch_size, num_heads, key_len, d_head]
+        Q = Q.view(batch_size, seq_len, self.num_heads, self.d_head).transpose(1, 2) # (B, num_heads, seq_len, d_head)
+        K_T = K.view(batch_size, key_len, self.num_heads, self.d_head).permute(0, 2, 3, 1) # (B, num_heads, d_head, key_len)
+        V = V.view(batch_size, key_len, self.num_heads, self.d_head).transpose(1, 2) # (B, num_heads, key_len, d_head)
 
-        out = self._scaled_dot_product(Q, K_T, V, mask, self.attn_dropout) # [batch_size, num_heads, seq_len, d_head]
+        out, sparsity_loss = self._scaled_dot_product(Q, K_T, V, mask, self.attn_dropout) # (B, num_heads, seq_len, d_head)
 
-        out = out.transpose(1, 2).contiguous() # [batch_size, seq_len, num_heads, d_head]
-        out = out.view(batch_size, seq_len, d_model) # [batch_size, seq_len, d_model]
+        out = out.transpose(1, 2).contiguous() # (B, seq_len, num_heads, d_head)
+        out = out.view(batch_size, seq_len, d_model) # (B, seq_len, d_model)
 
-        out = self.linear_out(out) # [batch_size, self.num_heads, seq_len, d_model]
+        out = self.linear_out(out) # (B, self.num_heads, seq_len, d_model)
 
-        return out
+        return out, sparsity_loss
     
     
-    # query: [batch_size, num_heads, seq_len, d_head]
-    # key:   [batch_size, num_heads, d_head, key_len]
-    # value: [batch_size, num_heads, key_len, d_head]
-    def _scaled_dot_product(self, query, key_T, value, mask=None, dropout=None):
+    def _scaled_dot_product(self, query: Tensor, key_T: Tensor, value: Tensor, mask=None, dropout=None):
+        """
+        Compute scaled dot-product attention.
+
+        Args:
+            query: tensor of shape (B, num_heads, seq_len, d_head).
+            key_T: transposed key tensor of shape (B, num_heads, d_head, key_len).
+            value: value tensor of shape (B, num_heads, key_len, d_head).
+            mask: optional attention mask applied before softmax.
+            dropout: optional dropout applied to attention weights.
+
+        Returns:
+            attention output tensor of shape (B, num_heads, seq_len, d_head).
+        """
 
         d_head = query.size()[-1]
 
-        scaled = torch.matmul(query, key_T) / math.sqrt(d_head) # [batch_size, num_heads, seq_len, key_len]
+        scaled = torch.matmul(query, key_T) / math.sqrt(d_head) # (B, num_heads, seq_len, key_len)
 
         if mask is not None:
             scaled = scaled.masked_fill(mask == 0, float('-inf'))
 
-        attention = F.softmax(scaled, dim=-1) # [batch_size, num_heads, seq_len, key_len]
+        attention = F.softmax(scaled, dim=-1) # (B, num_heads, seq_len, key_len)
+
+        # --- sparsity loss
+        entropy = - (attention * torch.log(attention + 1e-12))
+        if mask is not None:
+            valid_positions = mask.bool()
+            sparsity_loss = entropy.masked_select(valid_positions).mean()
+        else:
+            sparsity_loss = entropy.mean()
+
 
         if dropout is not None:
             attention = dropout(attention)
 
-        out = torch.matmul(attention, value) # [batch_size, num_heads, seq_len, d_head]
+        out = torch.matmul(attention, value) # (B, num_heads, seq_len, d_head)
 
-        return out
+        return out, sparsity_loss

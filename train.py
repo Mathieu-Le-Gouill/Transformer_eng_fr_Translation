@@ -1,47 +1,54 @@
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
-from utils.utils import prepare_dataset
+from utils.data_processing.data_prep import prepare_dataset
 from model.transformer import Transformer
 from datasets import load_dataset
+from transformers import MarianTokenizer
 import os
-from transformers import AutoTokenizer
-
 
 if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    max_len = 50
+    max_len = 64
 
     # --- Preparing Dataset ---
-
     dataset = load_dataset("opus_books", "en-fr")
 
     dataset_split = dataset["train"].train_test_split(test_size=0.1, seed=42)
     train = dataset_split["train"]  
     test = dataset_split["test"]
 
-    # Load pretrained tokenizers
-    eng_tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-    fr_tokenizer = AutoTokenizer.from_pretrained("camembert-base")
+    # Load pretrained tokenizer
+    tokenizer = MarianTokenizer.from_pretrained("Helsinki-NLP/opus-mt-en-fr")
 
-    train = prepare_dataset(train, src_tokenizer=eng_tokenizer, target_tokenizer=fr_tokenizer, max_len=max_len)
-    test  = prepare_dataset(test, src_tokenizer=eng_tokenizer, target_tokenizer=fr_tokenizer, max_len=max_len)
+    bos_id = tokenizer.bos_token_id if tokenizer.bos_token_id is not None else 0
+    pad_id = tokenizer.pad_token_id if tokenizer.pad_token_id is not None else 1
+    eos_id = tokenizer.eos_token_id if tokenizer.eos_token_id is not None else 2
+
+    vocab_size = tokenizer.vocab_size
+
+    train = prepare_dataset(train, src_tokenizer=tokenizer, target_tokenizer=tokenizer,
+                            max_len=max_len, target_bos_id=bos_id, target_eos_id=eos_id)
+    test  = prepare_dataset(test, src_tokenizer=tokenizer, target_tokenizer=tokenizer,
+                            max_len=max_len, target_bos_id=bos_id, target_eos_id=eos_id)
 
     train_loader = DataLoader(train, batch_size=32, shuffle=True)
     test_loader  = DataLoader(test, batch_size=32)
 
     # --- Loading Model ---
     model = Transformer(
-        src_voc_size=eng_tokenizer.vocab_size,
-        target_voc_size=fr_tokenizer.vocab_size,
+        src_voc_size=vocab_size,
+        target_voc_size=vocab_size,
 
-        src_pad_id=eng_tokenizer.pad_token_id,
-        target_pad_id=fr_tokenizer.pad_token_id,
+        lambda_sparse=0.01,
 
-        target_bos_id=fr_tokenizer.cls_token_id, # Use cls token for bos because the tokenizer don't thave bos by default
-        target_eos_id=fr_tokenizer.sep_token_id, # use sep token for eos because the tokenizer don't thave eos by default
+        src_pad_id=pad_id,
+        target_pad_id=pad_id,
+
+        target_bos_id=bos_id,
+        target_eos_id=eos_id,
 
         d_model=256,
         num_heads=4,
@@ -54,12 +61,11 @@ if __name__ == "__main__":
         device=device
     ).to(device)
 
-    # Model saving path
     checkpoint_dir = "./checkpoints"
     os.makedirs(checkpoint_dir, exist_ok=True)
     
     # --- TRAINING PARAMETERS ---
-    criterion = nn.CrossEntropyLoss(ignore_index=fr_tokenizer.pad_token_id)
+    criterion = nn.CrossEntropyLoss(ignore_index=pad_id)
     optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
 
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
@@ -88,11 +94,9 @@ if __name__ == "__main__":
         for batch in train_loader:
             src = batch["src"].to(device)
             target = batch["target"].to(device)
-            labels = batch["labels"].to(device)
 
             optimizer.zero_grad()
-            logits = model(src, target)
-            loss = criterion(logits.view(-1, fr_tokenizer.vocab_size), labels.view(-1))
+            loss = model.compute_loss(src, target)
 
             loss.backward()
             optimizer.step()
@@ -109,10 +113,8 @@ if __name__ == "__main__":
             for batch in test_loader:
                 src = batch["src"].to(device)
                 target = batch["target"].to(device)
-                labels = batch["labels"].to(device)
 
-                logits = model(src, target)
-                loss = criterion(logits.view(-1, fr_tokenizer.vocab_size), labels.view(-1))
+                loss = model.compute_loss(src, target)
                 total_test_loss += loss.item()
 
         avg_test_loss = total_test_loss / len(test_loader)

@@ -1,6 +1,6 @@
 import torch
-from utils.utils import translate_sentences
-from transformers import AutoTokenizer
+from utils.translation.translate_sentences import translate_sentences
+from transformers import MarianTokenizer
 import os
 import sys
 
@@ -9,8 +9,7 @@ if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    eng_tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-    fr_tokenizer = AutoTokenizer.from_pretrained("camembert-base")
+    tokenizer = MarianTokenizer.from_pretrained("Helsinki-NLP/opus-mt-en-fr")
 
     # Model saving path
     checkpoint_dir = "checkpoints"
@@ -22,7 +21,7 @@ if __name__ == "__main__":
                 "Please make sure you have trained the model or placed the checkpoint in the correct directory.\n")
 
     # Load model
-    model = torch.load(model_path, map_location=device)
+    model = torch.load(model_path, map_location=device, weights_only=False)
     model.eval()
 
     # Test sentences
@@ -37,7 +36,7 @@ if __name__ == "__main__":
         "If I had known about the meeting earlier, I would have prepared a detailed presentation."
     ]
 
-    french_translation = translate_sentences(model, eng_tokenizer, fr_tokenizer, english_sentences, device=device, max_len=50)
+    french_translation = translate_sentences(model, tokenizer, tokenizer, english_sentences, device=device, max_len=64)
 
     for eng_sentence, fr_sentence in zip(english_sentences, french_translation):
         print(f"EN: {eng_sentence}")

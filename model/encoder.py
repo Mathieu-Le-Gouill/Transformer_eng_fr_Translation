@@ -1,8 +1,17 @@
-from torch import nn
+from torch import nn, Tensor
 from model.multi_head_attention import MultiHeadAttention
 
 class Encoder(nn.Module):
-    def __init__(self, d_model=512, d_ff=2048, num_heads=6, dropout=0.1):
+    def __init__(self, d_model: int=512, d_ff: int=2048, num_heads: int=6, dropout: float=0.1):
+        """
+        Transformer Encoder Block
+
+        Args:
+            d_model: dimensionality of the token embeddings.
+            d_ff: dimensionality of the hidden layer in the feed-forward network.
+            num_heads: number of attention heads in the multi-head attention layer.
+            dropout: dropout probability applied after attention and feed-forward layers.
+        """
         super().__init__()
         self.attn = MultiHeadAttention(d_model, num_heads)
     
@@ -15,12 +24,22 @@ class Encoder(nn.Module):
 
         self.dropout = nn.Dropout(dropout)
     
-    # x: [batch_size, seq_len, d_model]
-    def forward(self, x, mask=None):
+
+    def forward(self, x: Tensor, mask=None):
+        """
+        Forward pass of the encoder block.
+
+        Args:
+            x: input tensor of shape (B, seq_len, d_model).
+            mask: optional attention mask applied during self-attention.
+
+        Returns:
+            output tensor of shape (B, seq_len, d_model).
+        """
 
         # Self-attention
         n = self.norm1(x)
-        attn = self.attn(n, n, n, mask)
+        attn, loss_attn = self.attn(n, n, n, mask)
         x = x + self.dropout(attn)
 
         # Feed-forward
@@ -28,4 +47,4 @@ class Encoder(nn.Module):
         ff = self.ffn(n)
         x = x + self.dropout(ff)
         
-        return x 
+        return x, loss_attn

@@ -4,36 +4,60 @@
 
 This project implements a **custom transformer model** for English-to-French translation.
 
-The model is trained on the **[OPUS Books dataset](https://huggingface.co/datasets/opus_books)** and uses **pretrained tokenizers**:
+The model is trained on the **[OPUS Books dataset](https://huggingface.co/datasets/opus_books)**.
 
-- **English:** `bert-base-uncased`  
-- **French:** `camembert-base`  
+Tokenization is performed using the pretrained **[Helsinki-NLP/opus-mt-en-fr](https://huggingface.co/Helsinki-NLP/opus-mt-en-fr)** tokenizer, which is specifically optimized for English-to-French translation.
 
 The project supports **training**, **translation/inference**, and **testing** through a simple **Makefile interface**.
 
 ---
 
-### Training Progress
+### Training Results
+
+EN: It is often said that the early bird catches the worm, but sometimes patience is more valuable.
+FR: Il est souvent dit que l’oiseau de bonne humeur, mais la patience est plus précieuse.
+
+EN: Had they followed the instructions carefully, they might have avoided the costly mistake.
+FR: Ils avaient suivis les instructions, ils auraient évité la tromper.
+
+EN: The book, which was written in the 19th century, still resonates with readers today.
+FR: Le registre, qui était écrit au 19, toujours des lecteurs avec des lecteurs.
+
+EN: The scientist, who had spent years studying climate change, finally published her groundbreaking research.
+FR: Le aïeur, qui avait passé des années de travail, finit par accepter ses études.
+
+EN: Although it was raining heavily, she decided to go for a long walk in the park.
+FR: Bien qu’il pleuvait lourdement, elle se décidait pour aller une longue promenade dans le parc.
+
+EN: She wondered whether she would ever have the courage to confront her fears.
+FR: Elle s’interrogea si jamais elle eût eu le courage de se nourrir de ses craintes.
+
+EN: While waiting for the train, I noticed a group of children playing happily near the station.
+FR: Pendant qu'on attendit le train, je remarquai un groupe de enfants qui jouissait heureusement près de la gare.
+
+EN: If I had known about the meeting earlier, I would have prepared a detailed presentation.
+FR: Si je savais bien quelle était la rencontre, je serais employée à un cadeau.
+
 
 The model was trained for up to 15 epochs. Below is a summary of the **training and test losses** for each epoch:
 
 | Epoch | Train Loss | Test Loss |
 |-------|------------|-----------|
-| 1     | 4.4641     | 3.6554    |
-| 2     | 3.4096     | 3.1144    |
-| 3     | 2.9456     | 2.8349    |
-| 4     | 2.6589     | 2.6873    |
-| 5     | 2.4630     | 2.6027    |
-| 6     | 2.3193     | 2.5435    |
-| 7     | 2.2071     | 2.4975    |
-| 8     | 2.1161     | 2.4791    |
-| 9     | 2.0399     | 2.4536    |
-| 10    | 1.9738     | 2.4551    |
-| 11    | 1.9168     | 2.4517    |
-| 12    | 1.8661     | 2.4304    |
-| 13    | 1.8218     | 2.4322    |
-| 14    | 1.7807     | 2.4324    |
-| 15    | 1.7430     | 2.4389    |
+| 1     | 3.6661     | 2.8754    |
+| 2     | 2.7687     | 2.4861    |
+| 3     | 2.4398     | 2.2492    |
+| 4     | 2.2211     | 2.1171    |
+| 5     | 2.0720     | 2.0236    |
+| 6     | 1.9618     | 1.9582    |
+| 7     | 1.8773     | 1.9206    |
+| 8     | 1.8091     | 1.8842    |
+| 9     | 1.7508     | 1.8613    |
+| 10    | 1.7019     | 1.8315    |
+| 11    | 1.6591     | 1.8198    |
+| 12    | 1.6215     | 1.7947    |
+| 13    | 1.5891     | 1.7889    |
+| 14    | 1.5576     | 1.7753    |
+| 15    | 1.5316     | 1.7635    |
 
 
 Early stopping was triggered at epoch 15 to prevent overfitting.  
@@ -90,4 +114,6 @@ torchvision>=0.15.0
 transformers>=5.0.0
 datasets>=4.0.0
 nltk>=3.9.0
+sentencepiece>=0.2.1
+sacremoses>=0.1.1
 ```
